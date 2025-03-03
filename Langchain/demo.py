@@ -110,13 +110,16 @@ async def generate_final_prompt(parsed_result: dict):
     - Use style elements, aperture effects, and softening techniques to enhance visual appeal.
 
     Example Output Format:
-    **Main Subjects:**
-    1. **Pregnant Woman**: ...
-    2. **Doctor**: ...
+    **Main Subjects:**  
+    1. **Pregnant Woman**: A confident pregnant woman stands on a sleek scale, hands resting gently on her baby bump, smiling warmly. She wears stylish maternity attire in neutral tones.  
+    2. **Doctor**: A compassionate female doctor stands beside her, holding a clipboard labeled *"Healthy Progress"* with a simple graph titled *"BMI & Pregnancy,"* showing smooth upward curves to represent healthy trends.  
 
-    **Background Elements:**
-    - **Poster**: ...
-    - **Table**: ...
+    **Background Elements:**  
+    - **Poster**: On the wall, a poster titled *"Nourish Your Body"* features illustrations of fruits like berries, oranges, and apples, with text: *"Fuel Your Journey."*  
+    - **Table**: A wooden table is arranged with a vibrant selection of fresh fruits: a bowl of ripe berries, halved oranges, sliced apples, and a cluster of grapes. A few almonds and a small bunch of bananas are placed casually for added variety.  
+
+    A plush armchair with a cozy throw blanket sits nearby for comfort. The overall design emphasizes calmness, trust, and empowerment, with soft textures and natural tones creating an inviting atmosphere. The focus remains on supporting a healthy pregnancy journey.
+
 
     Overall, ensure the scene conveys the core message and emotion of the content.
     """

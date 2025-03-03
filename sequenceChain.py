@@ -185,6 +185,7 @@ generate_final_prompt = PromptTemplate(
     For all text and charts on the poster except for the title, blur them.
     The text on any book, report, or clipboard held in hand does not need to be clear.
     
+    
     2.Food Elements:
     If the keyword involves many types of food, include some real food items and display them in the background of a poster.
     If it’s an open book, illustrate some blurred food images, and ensure that the book’s face is oriented toward the person.
@@ -198,7 +199,16 @@ generate_final_prompt = PromptTemplate(
     The depiction should include diverse ethnicities in a respectful and inclusive manner.
     
     5.Doctor Representation:
-    If there is a doctor in the image, the doctor must not be pregnant.
+    If there is a doctor in the image, the doctor must not be pregnant. Female doctor will be better.
+
+    6.Others:
+    - The description should be no more than 200 words.
+    - Describe the background, lighting, main subjects, items, and overall mood.
+    - The target audience is pregnant women; include calming, comforting, and supportive elements.
+    - Specify the sex of characters in Main Subjects.
+    - Consider incorporating style elements, aperture effects, and softening techniques to enhance the visual appeal.
+    - Ensure the image description is highly related to the provided keywords
+    - No more than two people in the image
 
     Examples:
 
@@ -221,7 +231,7 @@ log_prompt_chain = LogWrapperChain(chain=generate_final_prompt_chain, name="Prom
 # Step 4: 图像生成链 —— 自定义 Chain 调用 Leonardo API 生成图像
 # 此处定义为异步函数，通过 asyncio.run 在同步环境下调用
 async def call_leonardo(final_prompt: str) -> dict:
-    print("[INFO] [LeonardoChain] 开始调用 Leonardo AI 生成图像...")
+    print("[INFO] [LeonardoChain] Connecting Leonardo AI for image generation...")
     trimmed_prompt = final_prompt[:1450]  # 截断以防过长
     print(f"[DEBUG] [LeonardoChain] trimmed Final prompt：\n{trimmed_prompt}\n")
 
@@ -285,10 +295,10 @@ async def call_leonardo(final_prompt: str) -> dict:
             generated_images = generations_by_pk.get("generated_images", [])
             if generated_images:
                 image_url = generated_images[0].get("url")
-                print(f"[SUCCESS] [LeonardoChain] Image gn，URL: {image_url}\n")
+                print(f"[SUCCESS] [LeonardoChain] Image URL: {image_url}\n")
                 return {"image_url": image_url}
             else:
-                print("[WARNING] [LeonardoChain] Image generation completed，but cannont find the image url！\n")
+                print("[WARNING] [LeonardoChain] Image generation completed,but cannont find the image url!\n")
                 return {"image_url": ""}
 
         time.sleep(10)  # 等待 10 秒后重试
@@ -373,31 +383,37 @@ def run_pipeline_sequence(input_data: InputSchema):
     使用 SequentialChain 完成文本解析、图像提示生成和图像生成，
     每个步骤前后通过 LogWrapperChain 输出日志，最终返回整个流程的结果。
     """
-    max_attempts = 1
-    attempt = 0
     final_result = None
 
-    while attempt < max_attempts:
-        attempt += 1
-        print(f"\n[INFO] [run_pipeline_sequence] === attempts: {attempt} ===")
-        try:
-            result = overall_chain({"user_input": input_data.user_input})
-            print(f"[INFO] [run_pipeline_sequence] SequentialChain successfully, result:\n{result}\n")
-        except Exception as e:
-            print(f"[ERROR] [run_pipeline_sequence] SequentialChain failed：{e}")
-            result = None
+    try:
+        print(f"[INFO] [run_pipeline_sequence] Start SequentialChain")
+        result = overall_chain({"user_input": input_data.user_input})
+        print(f"[INFO] [run_pipeline_sequence] SequentialChain successfully, result:\n{result}\n")
+    except Exception as e:
+        print(f"[ERROR] [run_pipeline_sequence] SequentialChain failed：{e}")
+        result = None
 
-        if result is None:
-            print("[WARNING] [run_pipeline_sequence] No result")
+    if result is None:
+        print("[WARNING] [run_pipeline_sequence] No result")
+    else:
+        if True:
+            final_result = result
+            print("[INFO] [run_pipeline_sequence] Evaluation passed.")
         else:
-            # if mock_feedback():
-            if True:
-                final_result = result
-                print("[INFO] [run_pipeline_sequence] Evaluation passed.")
-                break
-            else:
-                print("[INFO] [run_pipeline_sequence] Evaluation Failed, regenerate the image")
+            max_attempts = 2
+            attempt = 0
+            final_result = None
+            while attempt < max_attempts:
+                final_prompt = result.get("final_prompt") 
+
+                result = log_leonardo_chain({"final_prompt": final_prompt})
+                if mock_feedback():
+                    final_result = result
+                    print("[INFO] [run_pipeline_sequence] Evaluation passed.")
+                    break
+                attempt += 1
                 time.sleep(1)
+                    
 
     if final_result is None:
         print("[ERROR] [run_pipeline_sequence] After many attempts, no satisfactory results were obtained.")
