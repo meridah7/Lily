@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="SequenceChain and Agent Design">
-    <mxGraphModel dx="1086" dy="839" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+    <mxGraphModel dx="846" dy="637" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -68,7 +68,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="agent_container" value="Agent (Dynamic Feedback Loop)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;shadow=1;" parent="1" vertex="1">
-          <mxGeometry x="150" y="220" width="560" height="140" as="geometry" />
+          <mxGeometry x="150" y="220" width="480" height="140" as="geometry" />
         </mxCell>
         <mxCell id="feedback_reception" value="Feedback Reception" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;shadow=1;" parent="agent_container" vertex="1">
           <mxGeometry x="40" y="60" width="120" height="40" as="geometry" />
@@ -76,16 +76,7 @@
         <mxCell id="decision" value="Decision Mechanism" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;shadow=1;" parent="agent_container" vertex="1">
           <mxGeometry x="240" y="60" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="output" value="Final Output" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;shadow=1;" parent="agent_container" vertex="1">
-          <mxGeometry x="430" y="60" width="120" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="feedback_to_decision" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;shadow=1;" parent="agent_container" source="feedback_reception" target="decision" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="300" y="280" as="sourcePoint" />
-            <mxPoint x="350" y="230" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="decision_to_output" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;shadow=1;" parent="agent_container" source="decision" target="output" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="300" y="280" as="sourcePoint" />
             <mxPoint x="350" y="230" as="targetPoint" />
@@ -139,13 +130,13 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="176dL2sjpwj3-BrTa8M4-4" value="" style="endArrow=none;dashed=1;html=1;rounded=0;" edge="1" parent="1">
+        <mxCell id="output" value="Final Output" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;shadow=1;" parent="1" vertex="1">
+          <mxGeometry x="740" y="280" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_to_output" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;shadow=1;" parent="1" source="decision" target="output" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="710" y="350" as="sourcePoint" />
-            <mxPoint x="710" y="290" as="targetPoint" />
-            <Array as="points">
-              <mxPoint x="710" y="300" />
-            </Array>
+            <mxPoint x="450" y="500" as="sourcePoint" />
+            <mxPoint x="500" y="450" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>

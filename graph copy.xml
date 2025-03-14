@@ -1,0 +1,53 @@
+<mxfile host="app.diagrams.net" modified="2025-03-07T00:00:00.000Z" agent="5.0 (Macintosh)" etag="abc123" version="14.6.13">
+  <diagram id="health_content_workflow" name="Health Content Processing Workflow">
+    <mxGraphModel dx="1186" dy="684" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Step 1: Original health articles -->
+        <mxCell id="step1" value="Online Health&lt;br&gt;Literacy Articles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=0" vertex="1" parent="1">
+          <mxGeometry x="40" y="160" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 2: Key info extraction -->
+        <mxCell id="step2" value="Key Info&lt;br&gt;Extraction" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=0" vertex="1" parent="1">
+          <mxGeometry x="240" y="160" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 3: Keypoints list -->
+        <mxCell id="step3" value="A List of Distinct Keypoints ⬇&lt;br&gt;with 2 sentences details" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=0" vertex="1" parent="1">
+          <mxGeometry x="440" y="160" width="180" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 4: Social media posts and categorization -->
+        <mxCell id="step4" value="Social Media Posts &amp; Categorization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=0" vertex="1" parent="1">
+          <mxGeometry x="680" y="160" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Connecting arrows -->
+        <mxCell id="arrow1" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="step1" target="step2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="190" y="190" as="sourcePoint" />
+            <mxPoint x="240" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow2" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="step2" target="step3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="390" y="190" as="sourcePoint" />
+            <mxPoint x="440" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow3" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="step3" target="step4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="630" y="190" as="sourcePoint" />
+            <mxPoint x="680" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

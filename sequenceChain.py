@@ -196,7 +196,7 @@ generate_final_prompt = PromptTemplate(
     
     4.Diversity:
 
-    The depiction should include diverse ethnicities in a respectful and inclusive manner.
+    The depiction should include diverse ethnicities in a respectful and inclusive manner. also try to add white people
     
     5.Doctor Representation:
     If there is a doctor in the image, the doctor must not be pregnant. Female doctor will be better.
