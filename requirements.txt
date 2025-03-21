@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+langgraph
+langchain-openai
+requests
+torch
+torchvision
+Pillow
+ipython

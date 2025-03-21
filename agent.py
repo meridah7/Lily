@@ -5,12 +5,13 @@ import os
 import json
 import time
 import requests
-import random  # 用于模拟反馈
+from typing import Optional
 
-from langchain_community.chat_models import ChatOpenAI  # 使用最新 LangChain 结构
-from langchain.agents import initialize_agent, AgentType
-from langchain.tools import tool
-from langchain_core.messages import HumanMessage
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, AgentType, Tool
+from PIL import Image
+import clip
+import torch
 
 app = FastAPI()
 
@@ -37,57 +38,53 @@ llm = ChatOpenAI(
 class InputSchema(BaseModel):
     user_input: str
 
-class PromptSchema(BaseModel):
-    prompt: str
-
-class GenerationStatusRequest(BaseModel):
-    generation_id: str
-
 ##############################################################################
 # 工具定义：每个工具都用 @tool 装饰，并提供说明以便 Agent 选择调用
 
-@tool
-async def parse_text_with_langchain(user_input: str) -> dict:
-    """解析文本并返回关键词和视觉描述"""
-    print(f"[INFO] [parse_text] 开始解析文本: {user_input[:50]}...")
-    prompt = f"""
-Based on the given content, generate classified keywords and a corresponding narrative visual description.
-Ensure that the output is related to the post content, reasonable, and represents a realistic scenario.
+def evaluate_clip_similarity(image_url: str, text_description: str) -> dict:
+    """
+    使用 CLIP 模型评估图像与文本的对齐程度。
+    输入: 图像 URL 和文本描述。
+    输出: 包含 "clip_score"（语义对齐分数）和 "aesthetic_scores"（美学分数）的字典。
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    clip_model, preprocess = clip.load("ViT-B/32", device=device)
 
-Content: {user_input}
-"""
-    print(f"[DEBUG] [parse_text] Prompt 内容:\n{prompt}")
-    response = llm.invoke([HumanMessage(content=prompt)])
-    print(f"[DEBUG] [parse_text] LLM 返回内容: {response.content[:100]}...")
-    try:
-        parsed_result = json.loads(response.content)
-        print(f"[SUCCESS] [parse_text] 解析成功: {parsed_result}")
-    except json.JSONDecodeError:
-        error_msg = "[ERROR] [parse_text] JSON解析失败，请检查提示语格式。"
-        print(error_msg)
-        raise ValueError(error_msg)
-    return parsed_result
+    # 下载并预处理图像
+    image = Image.open(requests.get(image_url, stream=True).raw)
+    image_input = preprocess(image).unsqueeze(0).to(device)
 
-@tool
-async def generate_final_prompt(parsed_result: dict) -> str:
-    """根据解析结果生成图像描述提示"""
-    print("[INFO] [generate_prompt] 开始生成图像提示...")
-    keywords = json.dumps(parsed_result.get("Keywords", {}), indent=2)
-    visual_description = parsed_result.get("Visual_Description", "")
-    prompt_template = f"""
-Please generate a detailed image generation prompt based on the following parsed result.
-Parsed Result: 
-Keywords: {keywords}
-Visual_Description: {visual_description}
-"""
-    print(f"[DEBUG] [generate_prompt] 使用的模板:\n{prompt_template}")
-    response = llm.invoke([HumanMessage(content=prompt_template)])
-    print(f"[SUCCESS] [generate_prompt] 生成提示成功: {response.content[:100]}...")
-    return response.content
+    # 预处理文本
+    text = clip.tokenize([text_description]).to(device)
 
-@tool
+    with torch.no_grad():
+        image_features = clip_model.encode_image(image_input)
+        text_features = clip_model.encode_text(text)
+
+        # 计算语义对齐分数
+        clip_score = (image_features @ text_features.T).item()
+        clip_score = max(0, min(1, (clip_score + 1) / 2))  # 归一化到 [0, 1]
+
+        # 计算美学分数
+        aesthetic_texts = ["a beautiful image", "an ugly image"]
+        aesthetic_inputs = clip.tokenize(aesthetic_texts).to(device)
+        aesthetic_features = clip_model.encode_text(aesthetic_inputs)
+        aesthetic_similarity = (image_features @ aesthetic_features.T).softmax(dim=-1)
+        beauty_score = aesthetic_similarity[0][0].item()
+        ugliness_score = aesthetic_similarity[0][1].item()
+
+    print(f"[INFO] [evaluate_clip] CLIP 分数: {clip_score:.4f}, 美学分数: Beautiful={beauty_score:.4f}, Ugly={ugliness_score:.4f}")
+    return {
+        "clip_score": clip_score,
+        "aesthetic_scores": {"beautiful": beauty_score, "ugly": ugliness_score},
+    }
+
 def generate_image_with_leonardo(prompt: str) -> str:
-    """调用 Leonardo AI 生成图像并返回图像 URL"""
+    """
+    调用 Leonardo AI 生成图像并返回图像 URL。
+    输入: 图像生成提示文本。
+    输出: 图像的 URL。
+    """
     print("[INFO] [generate_image] 开始调用 Leonardo AI 生成图像...")
     trimmed_prompt = prompt[:1450]  # 截断以防过长
     print(f"[DEBUG] [generate_image] 使用的提示文本（截断后）: {trimmed_prompt[:100]}...")
@@ -144,9 +141,36 @@ def generate_image_with_leonardo(prompt: str) -> str:
         time.sleep(10)
     raise TimeoutError("[ERROR] [generate_image] 图像生成超时")
 
+def regenerate_prompt(original_prompt: str) -> str:
+    """
+    模拟重新生成提示文本。
+    """
+    print("[INFO] Regenerating prompt...")
+    time.sleep(2)  # 模拟处理时间
+    new_prompt = original_prompt + " Ensure the prompt is highly related to the input text."
+    print(f"[INFO] New prompt generated: {new_prompt}")
+    return new_prompt
+
 ##############################################################################
-# 使用 Agent 的方式将三个工具整合成一个完整的流水线
-tools = [parse_text_with_langchain, generate_final_prompt, generate_image_with_leonardo]
+# 使用 Agent 的方式将工具整合成一个完整的流水线
+tools = [
+    Tool(
+        name="evaluate_clip_similarity",
+        func=lambda inputs: evaluate_clip_similarity(inputs["image_url"], inputs["text_description"]),
+        description="使用 CLIP 模型评估图像与文本的对齐程度。输入是一个包含 'image_url' 和 'text_description' 的字典，输出是一个包含 'clip_score'（语义对齐分数）和 'aesthetic_scores'（美学分数）的字典。",
+    ),
+    Tool(
+        name="generate_image_with_leonardo",
+        func=generate_image_with_leonardo,
+        description="调用 Leonardo AI 生成图像并返回图像 URL。输入是图像生成提示文本，输出是图像的 URL。",
+    ),
+    Tool(
+        name="regenerate_prompt",
+        func=regenerate_prompt,
+        description="重新生成提示文本以改进语义相关性。输入是原始提示文本，输出是新的提示文本。",
+    ),
+]
+
 agent = initialize_agent(
     tools,
     llm,
@@ -155,19 +179,12 @@ agent = initialize_agent(
 )
 
 ##############################################################################
-# 模拟反馈机制：随机返回通过或不通过（50% 概率）
-def mock_feedback() -> bool:
-    result = random.random() < 0.5
-    print(f"[INFO] [feedback] 模拟反馈结果: {'通过' if result else '不通过'}")
-    return result
-
-##############################################################################
-# FastAPI 路由：使用 Agent 完成完整流程，并加入反馈环路
+# FastAPI 路由：使用 Agent 完成完整流程，并加入评价阶段
 @app.post("/run_pipeline_agent")
 async def run_pipeline_agent(input_data: InputSchema):
     """
     使用 Agent 完成文本解析、图像提示生成和图像生成的流程，
-    并基于模拟反馈机制自动重试，最多重试 5 次。
+    并在最后加入评价阶段，评估生成的图像与原始输入文本的对齐程度。
     """
     max_attempts = 5
     attempt = 0
@@ -178,7 +195,11 @@ async def run_pipeline_agent(input_data: InputSchema):
         print(f"\n[INFO] [run_pipeline_agent] === 尝试次数: {attempt} ===")
         try:
             # Agent 根据输入自动调用工具完成整个流程
-            result = agent.invoke({"input": input_data.user_input})
+            result = agent.run({
+                "input": input_data.user_input,
+                "image_url": "",
+                "text_description": input_data.user_input
+            })
             print(f"[INFO] [run_pipeline_agent] Agent 调用成功，返回结果: {result}")
         except Exception as e:
             print(f"[ERROR] [run_pipeline_agent] Agent 调用失败: {e}")
@@ -187,21 +208,68 @@ async def run_pipeline_agent(input_data: InputSchema):
         if result is None:
             print("[WARNING] [run_pipeline_agent] 本次尝试未获得有效结果。")
         else:
-            # 模拟反馈，如果通过则退出循环
-            if mock_feedback():
-                final_result = result
-                print("[INFO] [run_pipeline_agent] 反馈通过，退出重试。")
+            # 提取生成的图像 URL 和原始输入文本
+            image_url = result.get("image_url", "")
+            original_text = input_data.user_input
+
+            if not image_url:
+                print("[WARNING] [run_pipeline_agent] 未生成有效图像 URL。")
+                continue
+
+            # 使用 CLIP 评估图像与原始输入文本的对齐程度
+            evaluation = evaluate_clip_similarity(image_url, original_text)
+            clip_score = evaluation["clip_score"]
+            beauty_score = evaluation["aesthetic_scores"]["beautiful"]
+
+            print(f"[INFO] [run_pipeline_agent] 当前 CLIP 分数: {clip_score:.4f}, 美学分数: {beauty_score:.4f}")
+
+            decision_input = f"""
+            The evaluation results are as follows:
+            - CLIP Score (Semantic Alignment): {clip_score:.4f}
+            - Aesthetic Score (Beautiful): {beauty_score:.4f}
+
+            Based on the following rules, decide the next step:
+            1. If the CLIP Score is below 0.7, it indicates weak semantic alignment. In this case, return "[regenerate prompt]" and provide a detailed explanation of how to improve the final prompt.
+            - Example: Suggest adding more descriptive keywords or refining the visual description to better align with the input text.
+            2. If the Aesthetic Score is below 0.6, it indicates poor visual quality. In this case, return "[regenerate image]" and provide a detailed explanation of how to improve the image generation prompt.
+            - Example: Suggest adjusting lighting, composition, or color schemes to enhance visual appeal.
+            3. If both scores are satisfactory (CLIP Score >= 0.7 and Aesthetic Score >= 0.6), return "[final output]" to indicate that the process is complete.
+
+            Provide clear instructions for each decision:
+            - For "[regenerate prompt]", include a revised version of the final prompt with specific improvements.
+            - For "[regenerate image]", include a revised version of the image generation prompt with specific improvements.
+            - For "[final output]", confirm that no further action is needed.
+
+            What should be the next step?
+            """
+
+            decision = agent.run({"input": decision_input})
+
+            print(f"[INFO] [run_pipeline_agent] Agent Decision: {decision}")
+
+            # Parse the decision result
+            if "[final output]" in decision:
+                final_result = {"image_url": image_url, "clip_score": clip_score, "beauty_score": beauty_score}
+                print("[INFO] [run_pipeline_agent] CLIP score meets requirements, exiting retry.")
                 break
+            elif "[regenerate prompt]" in decision:
+                print("[INFO] [run_pipeline_agent] Semantic alignment score does not meet requirements, preparing to regenerate the prompt.")
+                # Extract the revised prompt
+                new_prompt_start = decision.find("Revised Prompt:") + len("Revised Prompt:")
+                new_prompt_end = decision.find("\n", new_prompt_start)
+                revised_prompt = decision[new_prompt_start:new_prompt_end].strip()
+                print(f"[INFO] [run_pipeline_agent] New prompt: {revised_prompt}")
+                text_description = revised_prompt
+            elif "[regenerate image]" in decision:
+                print("[INFO] [run_pipeline_agent] Aesthetic score does not meet requirements, preparing to regenerate the image.")
+                # Extract the revised image generation prompt
+                new_image_prompt_start = decision.find("Revised Image Prompt:") + len("Revised Image Prompt:")
+                new_image_prompt_end = decision.find("\n", new_image_prompt_start)
+                revised_image_prompt = decision[new_image_prompt_start:new_image_prompt_end].strip()
+                print(f"[INFO] [run_pipeline_agent] New image generation prompt: {revised_image_prompt}")
+                image_path = regenerate_image()
             else:
-                print("[INFO] [run_pipeline_agent] 反馈不通过，准备重新生成图像。")
-                time.sleep(1)  # 重试前等待
-
-    if final_result is None:
-        print("[ERROR] [run_pipeline_agent] 多次尝试后仍未获得满意结果。")
-        return {"result": "经过多次重试后，未能生成满意的图像。"}
-    else:
-        print("[INFO] [run_pipeline_agent] 最终结果已生成。")
-        return {"result": final_result}
-
+                print("[INFO] [run_pipeline_agent] Unable to parse the Agent's decision, continuing to try...")
+                time.sleep(1)
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,0 +1,9 @@
+{
+  "final_prompt": "{\n  \"prompt\": \"A warm and inviting kitchen scene bathed in natural light streaming through a window, creating a supportive and nurturing atmosphere. A confident female new mother stands at a wooden countertop, preparing a nutritious snack with cooked salmon, a bowl of leafy spinach, grilled chicken breast, and a glass of milk, highlighting protein, calcium, and iron-rich foods. Nearby, a pitcher of water and a cup of herbal tea emphasize the importance of staying hydrated and avoiding excess caffeine. On the wall, a poster titled \\\"Postpartum Nutrition Tips\\\" features clear, bold text for the title while other information is subtly blurred. The background includes a variety of real food items arranged aesthetically, avoiding raw meats. The scene showcases soft textures and natural tones with gentle aperture effects and soft focus to enhance visual appeal. The overall mood is calming, comforting, and supportive, designed to resonate with pregnant and postpartum women seeking guidance on nutrition and recovery. The single subject is portrayed respectfully, embodying diversity and inclusivity with thoughtful representation.\"\n}",
+  "image_url": "https://cdn.leonardo.ai/users/534d9a32-be85-4c44-b7aa-0c44565d5320/generations/dd1da634-9e5f-456e-83b3-68767a1564b2/segments/1:1:1/Flux_Dev__prompt_A_warm_and_inviting_kitchen_scene_bathed_in_n_0.jpeg",
+  "clip_score": 17.12893295288086,
+  "aesthetic_score": 0.9470252990722656,
+  "passed": true,
+  "attempts": 0,
+  "user_feedback": null
+}
